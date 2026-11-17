@@ -8,3 +8,4 @@ __pycache__/
 projects/*/gotov_video.mp4
 projects/
 archived/
+.idea/

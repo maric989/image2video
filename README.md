@@ -51,6 +51,7 @@ python main.py moji_video
 ```
 
 Detaljna checklist i format plana: [`docs/project-rules.md`](docs/project-rules.md).
+Pravila za tekst naracije i voiceover: [`docs/transcript-generation-rules.md`](docs/transcript-generation-rules.md).
 
 ### `plan.md` (primer)
 
@@ -94,7 +95,7 @@ Ime fajla u planu (`Slika1`) mora da se poklopi sa slikom u `slike/` (`slika1.jp
 1. Učitaj projekat iz `projects/<ime>/`
 2. Proveri obavezno: `transcript.md`, `.wav`, `plan.md`, `slike/`
 3. Parsira `plan.md` — mapira `SlikaN` → start vreme; trajanje = do sledeće slike (poslednja do kraja audija)
-4. Resize / letterbox na 1080×1920 i automatski kratki crossfade između scena (do 0,35 sekundi)
+4. Resize / letterbox na 1080×1920, blagi Ken Burns zoom i automatski kratki crossfade između scena (do 0,35 sekundi)
 5. Whisper captions sa audija + overlay naslova (`title.txt` ili ime foldera)
    - Koristi `whisper_hint.txt` ako postoji; u suprotnom koristi početak `transcript.md` kao pomoć za imena i termine
 6. Spoji audio + render MP4
@@ -120,6 +121,8 @@ Vidi [`requirements.txt`](requirements.txt):
 |------|------|
 | `main.py` | Generator (CLI po projektu) |
 | `docs/project-rules.md` | Obavezna struktura projekta |
+| `docs/ideology_explained.md` | Zajednički vizuelni stil za ideološki serijal |
+| `docs/plan-generation-rules.md` | Pravila za generisanje `plan.md` |
 | `requirements.txt` | Python paketi |
 | `UPUTSTVO.md` | Detaljniji koraci |
 | `spec.md` | Originalni vodič / spec |
@@ -131,5 +134,7 @@ Vidi [`requirements.txt`](requirements.txt):
 - Naslov dolazi iz `title.txt`, inače iz imena foldera.
 - Whisper hint se podešava u opcionom `whisper_hint.txt`; ako ga nema, koristi se početak obaveznog `transcript.md`.
 - Slike automatski prelaze jedna u drugu kratkim crossfade-om (do 0,35 sekundi); `plan.md` ne treba menjati, a trajanje videa ostaje vezano za audio.
+- Slike dobijaju blagi centralni zoom do 4% tokom scene. Titlovi su manji, sa crnim obrubom bez pune crne pozadine, i pozicionirani u donjoj trećini.
+- Tokom renderovanja konzola prikazuje progress bar sa procentom.
 - Render može potrajati zavisno od dužine audija i broja slika.
 - Pillow 10+ više nema `Image.ANTIALIAS` — u `main.py` je kompatibilnosni patch za MoviePy 1.0.3.

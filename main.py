@@ -18,6 +18,7 @@ from moviepy.editor import (
     TextClip,
 )
 from moviepy.video.compositing.transitions import crossfadein
+from proglog import ProgressBarLogger
 
 # Pillow 10+ uklonio ANTIALIAS; MoviePy 1.0.3 ga još očekuje
 if not hasattr(PILImage, "ANTIALIAS"):
@@ -31,11 +32,40 @@ PROJECTS_DIR = Path("projects")
 FONT = "/System/Library/Fonts/Supplemental/Impact.ttf"
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
 VIDEO_SIZE = (1080, 1920)  # vertikalni Shorts/Reels format
-SUBTITLE_Y = 1180  # malo više da ne prekriva fokus na slici
+SUBTITLE_Y = int(VIDEO_SIZE[1] * 0.75)
+SUBTITLE_FONT_SIZE = 50
+SUBTITLE_STROKE_WIDTH = 3
 WHISPER_MODEL = "small"
 WORDS_PER_CHUNK = 3
 WHISPER_HINT_MAX_CHARS = 600
 IMAGE_TRANSITION_DURATION = 0.35
+KEN_BURNS_MAX_ZOOM = 1.04
+
+
+class ConsoleProgressLogger(ProgressBarLogger):
+    """Print a compact render progress bar without tqdm's per-frame output."""
+
+    def __init__(self) -> None:
+        super().__init__(logged_bars=[])
+        self.last_percent = -5
+
+    def bars_callback(
+        self, bar: str, attr: str, value: int, old_value: int | None = None
+    ) -> None:
+        if bar != "t" or attr != "index":
+            return
+        total = self.bars[bar].get("total")
+        if not total:
+            return
+        percent = min(100, int(value * 100 / total))
+        if percent >= self.last_percent + 5 or percent == 100:
+            filled = percent // 5
+            print(
+                f"\rRender: [{'#' * filled}{'-' * (20 - filled)}] {percent:3d}%",
+                end="",
+                flush=True,
+            )
+            self.last_percent = percent
 
 
 def nadji_projekat(ime: str) -> Path:
@@ -174,7 +204,20 @@ def pripremi_image_klip(putanja: Path, trajanje: float) -> ImageClip:
         klip = klip.on_color(
             size=VIDEO_SIZE, color=(0, 0, 0), pos=("center", "center")
         )
-    return klip
+
+    def zumiraj(get_frame, vreme: float):
+        skala = 1 + (KEN_BURNS_MAX_ZOOM - 1) * min(vreme / trajanje, 1)
+        kadar = get_frame(vreme)
+        sirina, visina = kadar.shape[1], kadar.shape[0]
+        nova_sirina, nova_visina = round(sirina * skala), round(visina * skala)
+        slika = PILImage.fromarray(kadar).resize(
+            (nova_sirina, nova_visina), resample=PILImage.Resampling.LANCZOS
+        )
+        levo = (nova_sirina - sirina) // 2
+        gore = (nova_visina - visina) // 2
+        return np.asarray(slika.crop((levo, gore, levo + sirina, gore + visina)))
+
+    return klip.fl(lambda gf, t: zumiraj(gf, t), apply_to=[])
 
 
 def napravi_klipove_iz_plana(
@@ -273,9 +316,22 @@ def ucitaj_audio_za_whisper(wav: Path) -> np.ndarray:
     return np.frombuffer(out, dtype=np.float32).copy()
 
 
-def transkribuj_reci(wav: Path, hint: str) -> list[dict]:
+def ucitaj_jezik(projekat: Path) -> str:
+    """Whisper jezik: language.txt, inače 'en' za *_en projekte, default 'sr'."""
+    jezik_fajl = projekat / "language.txt"
+    if jezik_fajl.is_file():
+        kod = jezik_fajl.read_text(encoding="utf-8").strip().splitlines()
+        if kod and kod[0].strip():
+            return kod[0].strip().lower()
+    if projekat.name.endswith("_en"):
+        return "en"
+    return "sr"
+
+
+def transkribuj_reci(wav: Path, hint: str, jezik: str = "sr") -> list[dict]:
     """faster-whisper word-level timestamps iz lokalnog .wav fajla."""
     print(f"   Model: {WHISPER_MODEL} (word_timestamps=True)")
+    print(f"   Jezik: {jezik}")
     if hint:
         print(f"   initial_prompt: {hint[:80]}…")
     audio = ucitaj_audio_za_whisper(wav)
@@ -283,7 +339,7 @@ def transkribuj_reci(wav: Path, hint: str) -> list[dict]:
     segments, info = model.transcribe(
         audio,
         word_timestamps=True,
-        language="sr",
+        language=jezik,
         vad_filter=True,
         initial_prompt=hint or None,
         condition_on_previous_text=True,
@@ -345,15 +401,15 @@ def napravi_caption_klip(tekst: str, start: float, end: float) -> TextClip | Non
     # Impact + debeli stroke = Shorts čitljivost; blaga crna pozadina iza reči
     clip = TextClip(
         tekst.upper(),
-        fontsize=70,
+        fontsize=SUBTITLE_FONT_SIZE,
         color="white",
         stroke_color="black",
-        stroke_width=5,
+        stroke_width=SUBTITLE_STROKE_WIDTH,
         font=FONT,
         method="caption",
         size=(900, None),
         align="center",
-        bg_color="black",
+        bg_color="transparent",
     )
     return (
         clip.set_start(start)
@@ -367,7 +423,8 @@ def napravi_whisper_captions(
 ) -> list[TextClip]:
     print("3. Transkribujem audio (faster-whisper)...")
     hint = ucitaj_whisper_hint(projekat, transcript)
-    reci = transkribuj_reci(wav, hint)
+    jezik = ucitaj_jezik(projekat)
+    reci = transkribuj_reci(wav, hint, jezik=jezik)
     print(f"   Reči: {len(reci)}")
     chunkovi = grupisi_u_chunkove(reci, max_reci=WORDS_PER_CHUNK)
     print(f"   Caption chunk-ova: {len(chunkovi)}")
@@ -399,24 +456,24 @@ def napravi_video(ime_projekta: str) -> None:
     izlaz = projekat / "gotov_video.mp4"
     naslov = naslov_projekta(projekat)
 
-    print(f"Projekat:   {projekat}")
-    print(f"Transcript: {transcript.name}")
-    print(f"Audio:      {wav.name}")
-    print(f"Plan:       plan.md ({len(plan)} scena)")
-    print(f"Slike:      {len(slike)}")
-    print(f"Naslov:     {naslov}")
+    print(f"Projekat:   {projekat}", flush=True)
+    print(f"Transcript: {transcript.name}", flush=True)
+    print(f"Audio:      {wav.name}", flush=True)
+    print(f"Plan:       plan.md ({len(plan)} scena)", flush=True)
+    print(f"Slike:      {len(slike)}", flush=True)
+    print(f"Naslov:     {naslov}", flush=True)
 
-    print("1. Učitavam audio...")
+    print("1. Učitavam audio...", flush=True)
     audio_klip = AudioFileClip(str(wav))
     ukupno_trajanje = audio_klip.duration
     print(f"   Trajanje audija: {ukupno_trajanje:.1f}s")
 
-    print("2. Sastavljam slike...")
+    print("2. Sastavljam slike...", flush=True)
     baza = napravi_klipove_iz_plana(plan, slike, ukupno_trajanje)
 
     caption_klipovi = napravi_whisper_captions(wav, projekat, transcript)
 
-    print("4. Dodajem naslov...")
+    print("4. Dodajem naslov...", flush=True)
     title_clip = TextClip(
         naslov, fontsize=60, color="white", font=FONT, bg_color="black"
     )
@@ -430,12 +487,17 @@ def napravi_video(ime_projekta: str) -> None:
     finalni_video = finalni_video.set_audio(audio_klip)
     finalni_video = finalni_video.set_duration(ukupno_trajanje)
 
-    print("5. Renderujem video (može potrajati)...")
+    print("5. Renderujem video (može potrajati)...", flush=True)
     finalni_video.write_videofile(
-        str(izlaz), fps=24, codec="libx264", audio_codec="aac"
+        str(izlaz),
+        fps=24,
+        codec="libx264",
+        audio_codec="aac",
+        logger=ConsoleProgressLogger(),
     )
+    print()
 
-    print(f"\nUspešno! Video: {izlaz}")
+    print(f"Uspešno! Video: {izlaz}", flush=True)
 
 
 def main() -> None:

@@ -36,18 +36,14 @@ PRAVILA KOLONA
 - Skripta: kratak citat / parafraza trenutka iz transcripta, u navodnicima. Može "..." na početku/kraju ako je isečak.
 - Prompt: ENGLESKI, u backtick-ovima (`...`). Jedan red po ćeliji. Bez markdown bold unutar prompta.
 
-VIZUELNI STIL PROMPTA (uvek isti prefiks / jezik)
-Svaki prompt MORA početi sa:
-2D minimalist explainer video art, vertical 9:16 aspect ratio, tall mobile orientation,
-
-I MORA završiti sa nečim od:
-Thick black outlines, flat solid vibrant colors, clean background, no text.
-ili
-Thick black outlines, flat vibrant colors, clean background, funny infographic style, no text.
-
-Stil lika: stick-figure / round white heads, funny infographic, minimal background.
-Zabranjeno: tekst u slici, watermark, logo sa slovima, fotorealizam, cinematic photo.
-Dozvoljeno: green chip / GPU motivi gde ima smisla za temu; crveni X za "nije to"; jednostavne metafore.
+VIZUELNI STIL SERIJALA (obavezno za `ideology_explained`)
+- Prati zajednički vodič [`ideology_explained.md`](ideology_explained.md); nemoj menjati vizuelni medijum ili estetiku od projekta do projekta.
+- Koristi ručno crtani 2D editorial cartoon stil: topla krem/bež pozadina, debele blago nepravilne crne konture, ograničena prigušena paleta, jednostavni ekspresivni likovi u donjoj polovini kadra i dosta praznog prostora iznad.
+- Humor neka bude blag i vizuelan (preterani rekvizit, poza ili izraz lica), ne generička „bright infographic“ estetika.
+- Ponavljajući narator, kada se koristi: mršav crtani muškarac, raščupana šiljata bela kosa, velike izražajne oči, crno odelo i pantalone. Ponovi ceo opis u promptu da bi generator zadržao izgled.
+- Stvarne istorijske ličnosti smeju da budu prepoznatljive karikature. Ozbiljne istorijske teme prikazuj obazrivo.
+- Bez teksta, slova, logotipa ili watermark-a u slici; bez fotorealizma, gradijenata ili 3D izgleda.
+- Engleske promptove piši u stilu i formatu iz vodiča, sa jednom jasnom vizuelnom idejom po slici.
 
 BROJ SCENA
 - Tipično 8–15 scena za ~60–90s.
@@ -101,9 +97,9 @@ Timing usklađen sa naracijom za 3 slike. Optimizovano za Gemini Imagen (9:16 ve
 
 | Naziv fajla | Tačan tajming u videu | Skripta (Trenutak kada se slika pojavljuje) | Engleski Prompt za generisanje (Kopiraj u Gemini) |
 | :--- | :--- | :--- | :--- |
-| **Slika1** | **0:00 - 0:07** | "Prva rečenica skripte..." | `2D minimalist explainer video art, vertical 9:16 aspect ratio, tall mobile orientation, DESCRIPTION. Thick black outlines, flat solid vibrant colors, clean background, no text.` |
-| **Slika2** | **0:07 - 0:14** | "Druga ideja..." | `2D minimalist explainer video art, vertical 9:16 aspect ratio, tall mobile orientation, DESCRIPTION. Thick black outlines, flat vibrant colors, clean background, no text.` |
-| **Slika3** | **0:14 - 0:20** | "CTA / kraj." | `2D minimalist explainer video art, vertical 9:16 aspect ratio, tall mobile orientation, DESCRIPTION. Thick black outlines, flat vibrant colors, clean background, no text.` |
+| **Slika1** | **0:00 - 0:07** | "Prva rečenica skripte..." | `2D hand-drawn editorial cartoon illustration, vertical 9:16 composition, warm light cream-beige empty background, DESCRIPTION of one funny scene. Thick slightly imperfect black outlines, flat muted cream, charcoal, dusty blue, muted red, olive green and ochre palette, subjects grouped in the lower half with generous empty space above, simple thin black ground line, no text, no letters, no logos, no watermark, no photorealism, no gradients, no 3D.` |
+| **Slika2** | **0:07 - 0:14** | "Druga ideja..." | `2D hand-drawn editorial cartoon illustration, vertical 9:16 composition, warm light cream-beige empty background, DESCRIPTION of one funny scene. Thick slightly imperfect black outlines, flat muted cream, charcoal, dusty blue, muted red, olive green and ochre palette, subjects grouped in the lower half with generous empty space above, simple thin black ground line, no text, no letters, no logos, no watermark, no photorealism, no gradients, no 3D.` |
+| **Slika3** | **0:14 - 0:20** | "CTA / kraj." | `2D hand-drawn editorial cartoon illustration, vertical 9:16 composition, warm light cream-beige empty background, DESCRIPTION of one funny scene. Thick slightly imperfect black outlines, flat muted cream, charcoal, dusty blue, muted red, olive green and ochre palette, subjects grouped in the lower half with generous empty space above, simple thin black ground line, no text, no letters, no logos, no watermark, no photorealism, no gradients, no 3D.` |
 ```
 
 Referenca kompletnog primera: `projects/nvidia1/plan.md`.
@@ -117,5 +113,5 @@ Referenca kompletnog primera: `projects/nvidia1/plan.md`.
 - [ ] Svaki red: `**SlikaN**` | `**M:SS - M:SS**` | `"..."` | `` `prompt` ``
 - [ ] Timing bez rupa i bez preklapanja
 - [ ] Poslednji end ≈ trajanje wav-a
-- [ ] Promptovi engleski, 9:16, stick-figure stil, `no text`
+- [ ] Promptovi engleski, 9:16, i dosledni vizuelnom vodiču `ideology_explained.md`
 - [ ] Broj redova = broj slika koje ćeš generisati (`slika1.jpeg` …)

@@ -45,11 +45,14 @@ Pravila:
 - Kolona **Vreme** = `0:00`, `**0:00**`, ili opseg `0:00 - 0:05` / `**0:00 - 0:05**`. Koristi se **početak** opsega.
 - Trajanje scene = do starta sledeće slike; poslednja ide do kraja audija.
 - Između scena se automatski dodaje crossfade do 0,35 sekundi. Prelaz se skraćuje za kratke scene i ne zahteva dodatne kolone u planu.
+- Slike dobijaju blagi centralni zoom do 4% tokom prikaza; titlovi su manji, sa crnim obrubom bez pune pozadine i postavljeni u donjoj trećini ekrana.
+- Tokom renderovanja skripta prikazuje progress bar sa procentom u konzoli.
 - Broj redova u planu treba da odgovara slikama koje želiš u videu (slike van plana se ne koriste).
 
 ## `transcript.md`
 
 - Tekst skripte / naracije za taj deo.
+- Brojeve piši slovima, nikad ciframa ili rimskim brojevima, da bi ih voiceover pravilno pročitao. Detalji i primeri: [`transcript-generation-rules.md`](transcript-generation-rules.md).
 - Ne ide direktno na ekran kao caption — captioni dolaze iz Whisper-a sa `.wav`.
 - Ako `whisper_hint.txt` ne postoji, početak transcripta (do 600 karaktera) pomaže Whisper-u da prepozna temu, imena i stručne termine.
 - Transcript je pomoć za prepoznavanje, ne zamena za transkripciju audija; izgovor i tekst mogu da se razlikuju.
@@ -64,6 +67,7 @@ Pravila:
 | Fajl | Uloga |
 |------|--------|
 | `title.txt` | Prva linija = naslov na dnu videa |
+| `language.txt` | Whisper jezik (`en`, `sr`, …); ako nema, `*_en` projekti → `en`, inače `sr` |
 | `whisper_hint.txt` | Opciono: prilagođen Whisper prompt; ako postoji, ima prednost nad transcriptom |
 | drugi fajlovi | Ignorišu se (npr. stari exporti, note) |
 
