@@ -96,7 +96,7 @@ Ime fajla u planu (`Slika1`) mora da se poklopi sa slikom u `slike/` (`slika1.jp
 2. Proveri obavezno: `transcript.md`, `.wav`, `plan.md`, `slike/`
 3. Parsira `plan.md` — mapira `SlikaN` → start vreme; trajanje = do sledeće slike (poslednja do kraja audija)
 4. Resize / letterbox na 1080×1920, blagi Ken Burns zoom i automatski kratki crossfade između scena (do 0,35 sekundi)
-5. Whisper captions sa audija + overlay naslova (`title.txt` ili ime foldera)
+5. Whisper captions sa audija, sa žutim isticanjem reči u trenutku kada je narator izgovara + naslov (`title.txt` ili ime foldera)
    - Koristi `whisper_hint.txt` ako postoji; u suprotnom koristi početak `transcript.md` kao pomoć za imena i termine
 6. Spoji audio + render MP4
 
@@ -131,7 +131,7 @@ Vidi [`requirements.txt`](requirements.txt):
 ## Napomene
 
 - Format izlaza je vertikalni (Shorts/Reels).
-- Naslov dolazi iz `title.txt`, inače iz imena foldera.
+- Naslov u crnoj traci dolazi iz `title.txt`, inače iz imena foldera. Whisper titlovi su odvojeni od naslova i žutom bojom ističu trenutno izgovorenu reč.
 - Whisper hint se podešava u opcionom `whisper_hint.txt`; ako ga nema, koristi se početak obaveznog `transcript.md`.
 - Slike automatski prelaze jedna u drugu kratkim crossfade-om (do 0,35 sekundi); `plan.md` ne treba menjati, a trajanje videa ostaje vezano za audio.
 - Slike dobijaju blagi centralni zoom do 4% tokom scene. Titlovi su manji, sa crnim obrubom bez pune crne pozadine, i pozicionirani u donjoj trećini.

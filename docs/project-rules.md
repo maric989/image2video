@@ -10,7 +10,7 @@ projects/<ime>/
   ├── <ime>.wav       # OBAVEZNO — gotova naracija (ili audio.wav / naracija.wav)
   ├── plan.md         # OBAVEZNO — sync slika po vremenu
   ├── slike/          # OBAVEZNO — slika1.jpeg, slika2.jpeg, …
-  ├── title.txt       # opciono — naslov na videu (inače ime foldera)
+  ├── title.txt       # opciono — naslov u traci na dnu videa (inače ime foldera)
   ├── whisper_hint.txt # opciono — termini / imena za Whisper
   └── gotov_video.mp4 # izlaz (generiše se)
 ```
@@ -45,7 +45,7 @@ Pravila:
 - Kolona **Vreme** = `0:00`, `**0:00**`, ili opseg `0:00 - 0:05` / `**0:00 - 0:05**`. Koristi se **početak** opsega.
 - Trajanje scene = do starta sledeće slike; poslednja ide do kraja audija.
 - Između scena se automatski dodaje crossfade do 0,35 sekundi. Prelaz se skraćuje za kratke scene i ne zahteva dodatne kolone u planu.
-- Slike dobijaju blagi centralni zoom do 4% tokom prikaza; titlovi su manji, sa crnim obrubom bez pune pozadine i postavljeni u donjoj trećini ekrana.
+- Slike dobijaju blagi centralni zoom do 4% tokom prikaza; Whisper titlovi su sa crnim obrubom, u donjoj trećini ekrana, a trenutno izgovorena reč se ističe žutom bojom.
 - Tokom renderovanja skripta prikazuje progress bar sa procentom u konzoli.
 - Broj redova u planu treba da odgovara slikama koje želiš u videu (slike van plana se ne koriste).
 
@@ -66,7 +66,7 @@ Pravila:
 
 | Fajl | Uloga |
 |------|--------|
-| `title.txt` | Prva linija = naslov na dnu videa |
+| `title.txt` | Prva linija = stalni naslov u traci na dnu videa |
 | `language.txt` | Whisper jezik (`en`, `sr`, …); ako nema, `*_en` projekti → `en`, inače `sr` |
 | `whisper_hint.txt` | Opciono: prilagođen Whisper prompt; ako postoji, ima prednost nad transcriptom |
 | drugi fajlovi | Ignorišu se (npr. stari exporti, note) |
@@ -90,7 +90,7 @@ Izlaz: `projects/<ime>/gotov_video.mp4`.
 | `plan.md` | Timing / redosled slika |
 | `slike/` | Vizuelni sadržaj scena |
 | `transcript.md` | Obavezna skripta; koristi se kao Whisper hint ako `whisper_hint.txt` ne postoji |
-| `title.txt` | Naslov overlay (opciono) |
+| `title.txt` | Stalni naslov u traci na dnu videa |
 | `whisper_hint.txt` | Opciono, projekatno podešavanje Whisper-a sa prednošću nad transcriptom |
 
 Slike prelaze jedna u drugu automatski, bez podešavanja u `plan.md`. Trajanje crossfade-a je najviše 0,35 sekundi i skraćuje se ako je neka od susednih scena kratka.

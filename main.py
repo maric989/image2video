@@ -9,6 +9,7 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image as PILImage
+from PIL import ImageDraw, ImageFont
 from faster_whisper import WhisperModel
 from moviepy.config import change_settings
 from moviepy.editor import (
@@ -394,23 +395,60 @@ def grupisi_u_chunkove(
     return chunkovi
 
 
-def napravi_caption_klip(tekst: str, start: float, end: float) -> TextClip | None:
-    if not tekst:
+def napravi_caption_sliku(
+    reci: list[str], aktivna_rec: int | None
+) -> PILImage.Image:
+    font = ImageFont.truetype(FONT, SUBTITLE_FONT_SIZE)
+    crtac = ImageDraw.Draw(PILImage.new("RGBA", (1, 1)))
+    razmak = crtac.textlength(" ", font=font)
+    sirina_maks = 900
+    redovi: list[list[tuple[int, str]]] = [[]]
+    sirina_reda = 0
+
+    for i, rec in enumerate(reci):
+        rec = rec.upper()
+        sirina_reci = crtac.textlength(rec, font=font)
+        dodatna_sirina = sirina_reci + (razmak if redovi[-1] else 0)
+        if redovi[-1] and sirina_reda + dodatna_sirina > sirina_maks:
+            redovi.append([])
+            sirina_reda = 0
+            dodatna_sirina = sirina_reci
+        redovi[-1].append((i, rec))
+        sirina_reda += dodatna_sirina
+
+    bbox = font.getbbox("Ag")
+    visina_reda = bbox[3] - bbox[1] + 20
+    slika = PILImage.new(
+        "RGBA", (sirina_maks, max(1, len(redovi) * visina_reda)), (0, 0, 0, 0)
+    )
+    crtac = ImageDraw.Draw(slika)
+    for red_index, red in enumerate(redovi):
+        sirina = sum(crtac.textlength(rec, font=font) for _, rec in red)
+        sirina += razmak * max(0, len(red) - 1)
+        x = (sirina_maks - sirina) / 2
+        y = red_index * visina_reda + 5 - bbox[1]
+        for i, rec in red:
+            crtac.text(
+                (x, y),
+                rec,
+                font=font,
+                fill=(255, 211, 77, 255)
+                if i == aktivna_rec
+                else (255, 255, 255, 255),
+                stroke_width=SUBTITLE_STROKE_WIDTH,
+                stroke_fill=(0, 0, 0, 255),
+            )
+            x += crtac.textlength(rec, font=font) + razmak
+    return slika
+
+
+def napravi_caption_klip(
+    reci: list[str], start: float, end: float, aktivna_rec: int | None = None
+) -> ImageClip | None:
+    if not reci:
         return None
     trajanje = max(end - start, 0.12)
-    # Impact + debeli stroke = Shorts čitljivost; blaga crna pozadina iza reči
-    clip = TextClip(
-        tekst.upper(),
-        fontsize=SUBTITLE_FONT_SIZE,
-        color="white",
-        stroke_color="black",
-        stroke_width=SUBTITLE_STROKE_WIDTH,
-        font=FONT,
-        method="caption",
-        size=(900, None),
-        align="center",
-        bg_color="transparent",
-    )
+    clip = ImageClip(np.asarray(napravi_caption_sliku(reci, aktivna_rec)))
     return (
         clip.set_start(start)
         .set_duration(trajanje)
@@ -420,7 +458,7 @@ def napravi_caption_klip(tekst: str, start: float, end: float) -> TextClip | Non
 
 def napravi_whisper_captions(
     wav: Path, projekat: Path, transcript: Path
-) -> list[TextClip]:
+) -> list[ImageClip]:
     print("3. Transkribujem audio (faster-whisper)...")
     hint = ucitaj_whisper_hint(projekat, transcript)
     jezik = ucitaj_jezik(projekat)
@@ -429,12 +467,24 @@ def napravi_whisper_captions(
     chunkovi = grupisi_u_chunkove(reci, max_reci=WORDS_PER_CHUNK)
     print(f"   Caption chunk-ova: {len(chunkovi)}")
 
-    klipovi: list[TextClip] = []
+    klipovi: list[ImageClip] = []
     for c in chunkovi:
         print(f"   [{c['start']:.2f}-{c['end']:.2f}] {c['text']}")
-        clip = napravi_caption_klip(c["text"], c["start"], c["end"])
+        chunk_reci = [
+            rec
+            for rec in reci
+            if rec["start"] >= c["start"] and rec["end"] <= c["end"]
+        ]
+        tekst_reci = [rec["word"] for rec in chunk_reci]
+        clip = napravi_caption_klip(tekst_reci, c["start"], c["end"])
         if clip is not None:
             klipovi.append(clip)
+        for i, rec in enumerate(chunk_reci):
+            aktivan_clip = napravi_caption_klip(
+                tekst_reci, rec["start"], rec["end"], aktivna_rec=i
+            )
+            if aktivan_clip is not None:
+                klipovi.append(aktivan_clip)
     return klipovi
 
 
